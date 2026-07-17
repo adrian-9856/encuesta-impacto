@@ -1,8 +1,10 @@
 /**
- * APPS SCRIPT — Encuesta "¿Qué es el impacto?"
+ * APPS SCRIPT — Encuesta "¿Qué es el impacto?" (nube de palabras)
  * -----------------------------------------------
- * Este script recibe cada respuesta enviada desde la página HTML
- * y la agrega como una diapositiva nueva en una presentación de Google Slides.
+ * Cada respuesta (1-2 palabras) se agrega como una caja de texto nueva
+ * dentro de UNA SOLA diapositiva, en una posición y estilo variados,
+ * simulando una "nube de palabras". No se crean diapositivas nuevas
+ * ni presentaciones nuevas por cada respuesta.
  *
  * La primera vez que alguien responde, el script CREA la presentación
  * automáticamente (no necesitas tenerla creada de antemano) y guarda
@@ -25,7 +27,15 @@
  * Si más adelante modificas este código, debes volver a "Implementar" →
  * "Gestionar implementaciones" → editar (ícono de lápiz) → "Nueva versión" → Implementar,
  * para que los cambios entren en efecto sin cambiar la URL.
+ *
+ * IMPORTANTE: si vienes de una versión anterior (una diapositiva por
+ * respuesta, o selección única), ejecuta UNA VEZ manualmente la función
+ * reiniciarEncuesta() antes de volver a probar, para arrancar con una
+ * presentación limpia de una sola diapositiva.
  */
+
+var PREGUNTA = '¿Qué es para ti el impacto?';
+var COLORES = ['#1A1A1A', '#3B3B3B', '#5C5C5C', '#787878'];
 
 function doPost(e) {
   try {
@@ -33,6 +43,8 @@ function doPost(e) {
     if (!respuesta) {
       return jsonOutput({ ok: false, error: 'Respuesta vacía' });
     }
+    // Nos aseguramos de no agregar más de 2 palabras, aunque llegue más texto.
+    var frase = respuesta.split(/\s+/).slice(0, 2).join(' ');
 
     var props = PropertiesService.getScriptProperties();
     var presId = props.getProperty('PRESENTATION_ID');
@@ -40,29 +52,13 @@ function doPost(e) {
 
     if (!presId) {
       presentation = SlidesApp.create('Presentacion');
-      presId = presentation.getId();
-      props.setProperty('PRESENTATION_ID', presId);
+      props.setProperty('PRESENTATION_ID', presentation.getId());
+      buildWordCloudSlide(presentation);
     } else {
       presentation = SlidesApp.openById(presId);
     }
 
-    var pageWidth = presentation.getPageWidth();
-    var pageHeight = presentation.getPageHeight();
-
-    var slide = presentation.appendSlide(SlidesApp.PredefinedLayout.BLANK);
-
-    var textBox = slide.insertTextBox(
-      respuesta,
-      50, 60,
-      pageWidth - 100, pageHeight - 160
-    );
-    var style = textBox.getText().getTextStyle();
-    style.setFontSize(24);
-    style.setFontFamily('Georgia');
-
-    var timestamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm");
-    var footer = slide.insertTextBox(timestamp, 50, pageHeight - 60, 300, 30);
-    footer.getText().getTextStyle().setFontSize(10).setForegroundColor('#888888');
+    addWordToCloud(presentation, frase);
 
     return jsonOutput({ ok: true, presentationUrl: presentation.getUrl() });
 
@@ -83,9 +79,43 @@ function jsonOutput(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+/** Crea la única diapositiva de la nube de palabras, con la pregunta como título. */
+function buildWordCloudSlide(presentation) {
+  var placeholder = presentation.getSlides()[0];
+  var slide = presentation.appendSlide(SlidesApp.PredefinedLayout.BLANK);
+  placeholder.remove();
+
+  var pageWidth = presentation.getPageWidth();
+  var titleBox = slide.insertTextBox(PREGUNTA, 40, 20, pageWidth - 80, 50);
+  titleBox.getText().getTextStyle().setFontSize(22).setBold(true);
+}
+
+/** Agrega una frase (1-2 palabras) a la nube, en posición y estilo aleatorios. */
+function addWordToCloud(presentation, frase) {
+  var slide = presentation.getSlides()[0];
+  var pageWidth = presentation.getPageWidth();
+  var pageHeight = presentation.getPageHeight();
+
+  var areaTop = 90;
+  var boxWidth = 180;
+  var boxHeight = 45;
+
+  var x = Math.random() * (pageWidth - boxWidth - 40) + 20;
+  var y = areaTop + Math.random() * (pageHeight - areaTop - boxHeight - 20);
+
+  var box = slide.insertTextBox(frase, x, y, boxWidth, boxHeight);
+  var style = box.getText().getTextStyle();
+  var tamano = 14 + Math.floor(Math.random() * 20); // 14–34
+  style.setFontSize(tamano);
+  style.setBold(Math.random() > 0.5);
+  style.setForegroundColor(COLORES[Math.floor(Math.random() * COLORES.length)]);
+  box.setRotation(Math.round(Math.random() * 20 - 10)); // -10° a 10°
+}
+
 /**
- * Ejecuta esto UNA VEZ manualmente si quieres borrar la referencia guardada
- * y que la próxima respuesta cree una presentación nueva desde cero.
+ * Ejecuta esto UNA VEZ manualmente (menú de funciones arriba en el editor →
+ * elige "reiniciarEncuesta" → botón Ejecutar) si vienes de una versión
+ * anterior o quieres empezar la nube de palabras desde cero.
  * NO borra el archivo viejo de Drive (eso lo borras tú manualmente si quieres).
  */
 function reiniciarEncuesta() {
@@ -94,8 +124,8 @@ function reiniciarEncuesta() {
 }
 
 /**
- * Función opcional: ejecútala manualmente una vez si quieres obtener
- * de inmediato el link de la presentación antes de recibir respuestas.
+ * Función opcional: ejecútala manualmente una vez si quieres crear la
+ * presentación de una vez, antes de recibir respuestas.
  */
 function crearPresentacionManualmente() {
   var props = PropertiesService.getScriptProperties();
@@ -105,5 +135,6 @@ function crearPresentacionManualmente() {
   }
   var presentation = SlidesApp.create('Presentacion');
   props.setProperty('PRESENTATION_ID', presentation.getId());
+  buildWordCloudSlide(presentation);
   Logger.log('Presentación creada: ' + presentation.getUrl());
 }

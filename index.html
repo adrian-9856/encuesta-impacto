@@ -72,23 +72,20 @@
     margin-bottom:30px;
   }
 
-  textarea{
+  input#respuesta{
     width:100%;
-    min-height:120px;
-    resize:vertical;
     background:#FAFAFA;
     border:1px solid var(--line);
     border-radius:10px;
     padding:16px;
     color:var(--ink);
     font-family:'Inter', sans-serif;
-    font-size:16px;
-    line-height:1.5;
+    font-size:18px;
     outline:none;
     transition:border-color .2s ease;
   }
-  textarea::placeholder{ color:rgba(0,0,0,0.35); }
-  textarea:focus{ border-color:var(--accent); }
+  input#respuesta::placeholder{ color:rgba(0,0,0,0.35); }
+  input#respuesta:focus{ border-color:var(--accent); }
 
   .row{
     display:flex;
@@ -238,9 +235,9 @@
     <div class="eyebrow">Encuesta &middot; Impacto</div>
     <h1>¿Qué es <em>para ti</em> el impacto?</h1>
     <form id="form">
-      <textarea id="respuesta" placeholder="Escribe tu respuesta aquí…" required maxlength="600"></textarea>
+      <input type="text" id="respuesta" placeholder="Escribe 1 o 2 palabras…" required maxlength="40" autocomplete="off">
       <div class="row">
-        <span class="hint" id="counter">0 / 600</span>
+        <span class="hint" id="counter">0 / 2 palabras</span>
         <button type="submit" id="submitBtn">Enviar respuesta →</button>
       </div>
     </form>
@@ -275,7 +272,7 @@
   const YOUTUBE_WATCH_URL = `https://www.youtube.com/watch?v=${YOUTUBE_VIDEO_ID}`;
 
   const form = document.getElementById('form');
-  const textarea = document.getElementById('respuesta');
+  const input = document.getElementById('respuesta');
   const counter = document.getElementById('counter');
   const card = document.getElementById('card');
   const submitBtn = document.getElementById('submitBtn');
@@ -285,13 +282,22 @@
   const videoIframe = document.getElementById('videoIframe');
   const closeVideo = document.getElementById('closeVideo');
 
-  textarea.addEventListener('input', () => {
-    counter.textContent = `${textarea.value.length} / 600`;
+  function contarPalabras(texto) {
+    const limpio = texto.trim();
+    return limpio === '' ? 0 : limpio.split(/\s+/).length;
+  }
+
+  input.addEventListener('input', () => {
+    const palabras = input.value.trim().split(/\s+/).filter(Boolean);
+    if (palabras.length > 2) {
+      input.value = palabras.slice(0, 2).join(' ');
+    }
+    counter.textContent = `${contarPalabras(input.value)} / 2 palabras`;
   });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const respuesta = textarea.value.trim();
+    const respuesta = input.value.trim();
     if(!respuesta) return;
 
     submitBtn.disabled = true;
@@ -339,12 +345,12 @@
   function closeVideoAndReset(){
     videoOverlay.classList.remove('show');
     videoIframe.src = ""; // detiene la reproducción
-    textarea.value = "";
-    counter.textContent = "0 / 600";
+    input.value = "";
+    counter.textContent = "0 / 2 palabras";
     submitBtn.disabled = false;
     submitBtn.textContent = "Enviar respuesta →";
     card.classList.remove('hide');
-    textarea.focus();
+    input.focus();
   }
 
   closeVideo.addEventListener('click', closeVideoAndReset);
