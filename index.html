@@ -72,34 +72,23 @@
     margin-bottom:30px;
   }
 
-  .options{
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-  }
-  .option{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    padding:14px 16px;
+  textarea{
+    width:100%;
+    min-height:120px;
+    resize:vertical;
+    background:#FAFAFA;
     border:1px solid var(--line);
     border-radius:10px;
-    background:#FAFAFA;
-    cursor:pointer;
-    transition:border-color .2s ease, background .2s ease;
-  }
-  .option:hover{ border-color:rgba(0,0,0,0.25); }
-  .option.selected{ border-color:var(--ink); background:#F0F0F0; }
-  .option input[type="radio"]{
-    accent-color:var(--ink);
-    width:18px;
-    height:18px;
-    flex-shrink:0;
-  }
-  .option span{
-    font-size:15px;
+    padding:16px;
     color:var(--ink);
+    font-family:'Inter', sans-serif;
+    font-size:16px;
+    line-height:1.5;
+    outline:none;
+    transition:border-color .2s ease;
   }
+  textarea::placeholder{ color:rgba(0,0,0,0.35); }
+  textarea:focus{ border-color:var(--accent); }
 
   .row{
     display:flex;
@@ -249,27 +238,10 @@
     <div class="eyebrow">Encuesta &middot; Impacto</div>
     <h1>¿Qué es <em>para ti</em> el impacto?</h1>
     <form id="form">
-      <div class="options" id="options">
-        <label class="option">
-          <input type="radio" name="respuesta" value="Ayudar a otras personas">
-          <span>Ayudar a otras personas</span>
-        </label>
-        <label class="option">
-          <input type="radio" name="respuesta" value="Generar un cambio duradero">
-          <span>Generar un cambio duradero</span>
-        </label>
-        <label class="option">
-          <input type="radio" name="respuesta" value="Dejar un legado">
-          <span>Dejar un legado</span>
-        </label>
-        <label class="option">
-          <input type="radio" name="respuesta" value="Crecer y aprender">
-          <span>Crecer y aprender</span>
-        </label>
-      </div>
+      <textarea id="respuesta" placeholder="Escribe tu respuesta aquí…" required maxlength="600"></textarea>
       <div class="row">
-        <span class="hint">Elige una opción</span>
-        <button type="submit" id="submitBtn" disabled>Enviar respuesta →</button>
+        <span class="hint" id="counter">0 / 600</span>
+        <button type="submit" id="submitBtn">Enviar respuesta →</button>
       </div>
     </form>
   </div>
@@ -303,7 +275,8 @@
   const YOUTUBE_WATCH_URL = `https://www.youtube.com/watch?v=${YOUTUBE_VIDEO_ID}`;
 
   const form = document.getElementById('form');
-  const optionInputs = form.querySelectorAll('input[name="respuesta"]');
+  const textarea = document.getElementById('respuesta');
+  const counter = document.getElementById('counter');
   const card = document.getElementById('card');
   const submitBtn = document.getElementById('submitBtn');
   const rippleWrap = document.getElementById('rippleWrap');
@@ -312,19 +285,14 @@
   const videoIframe = document.getElementById('videoIframe');
   const closeVideo = document.getElementById('closeVideo');
 
-  optionInputs.forEach(input => {
-    input.addEventListener('change', () => {
-      document.querySelectorAll('.option').forEach(el => el.classList.remove('selected'));
-      input.closest('.option').classList.add('selected');
-      submitBtn.disabled = false;
-    });
+  textarea.addEventListener('input', () => {
+    counter.textContent = `${textarea.value.length} / 600`;
   });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const selected = form.querySelector('input[name="respuesta"]:checked');
-    if(!selected) return;
-    const respuesta = selected.value;
+    const respuesta = textarea.value.trim();
+    if(!respuesta) return;
 
     submitBtn.disabled = true;
     submitBtn.textContent = "Enviando…";
@@ -371,11 +339,12 @@
   function closeVideoAndReset(){
     videoOverlay.classList.remove('show');
     videoIframe.src = ""; // detiene la reproducción
-    optionInputs.forEach(input => input.checked = false);
-    document.querySelectorAll('.option').forEach(el => el.classList.remove('selected'));
-    submitBtn.disabled = true;
+    textarea.value = "";
+    counter.textContent = "0 / 600";
+    submitBtn.disabled = false;
     submitBtn.textContent = "Enviar respuesta →";
     card.classList.remove('hide');
+    textarea.focus();
   }
 
   closeVideo.addEventListener('click', closeVideoAndReset);

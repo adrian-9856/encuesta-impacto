@@ -1,9 +1,7 @@
 # Encuesta — ¿Qué es para ti el impacto?
 
-Página de una sola pregunta de **selección única** (varias opciones, la persona elige una)
-que muestra un video de agradecimiento al responder. Cada respuesta suma 1 al conteo de
-esa opción y actualiza un **gráfico de dona** en una presentación de Google Slides con el
-acumulado de todas las respuestas.
+Página de una sola pregunta que muestra un video de agradecimiento al responder,
+y envía cada respuesta como una diapositiva nueva a una presentación de Google Slides.
 
 ## Archivos
 
@@ -24,19 +22,6 @@ acumulado de todas las respuestas.
 8. Copia la URL que termina en `/exec`.
 
 Si más adelante editas el script, debes volver a implementar (Gestionar implementaciones → editar → Nueva versión → Implementar) para que los cambios entren en efecto sin cambiar la URL.
-
-### Cambiar las opciones de respuesta
-
-Las opciones están definidas en dos lugares que deben coincidir **letra por letra**:
-
-- `AppsScript_EncuestaImpacto.gs`, en el arreglo `OPTIONS` (arriba del archivo).
-- `index.html`, en los `<input type="radio">` dentro del `<form>`.
-
-Si cambias las opciones (o vienes de la versión anterior de respuesta libre), ejecuta
-**una sola vez** la función `reiniciarEncuesta()` desde el editor de Apps Script (selecciónala
-en el menú desplegable de funciones arriba y presiona "Ejecutar"), y luego vuelve a implementar
-una **Nueva versión**. Esto borra las referencias guardadas para que la próxima respuesta cree
-la Sheet y la Presentación desde cero, ya sincronizadas con las opciones nuevas.
 
 ## Paso 2 — Conectar la página con el script
 
@@ -81,9 +66,13 @@ Una vez publicado, comparte el link que te den (por WhatsApp, QR, etc.).
 
 ## Dónde quedan las respuestas
 
-La primera vez que alguien responde, el script crea automáticamente en tu Google Drive:
+Cada respuesta enviada crea una diapositiva nueva en una presentación de Google Slides llamada
+**"Presentacion"**, que se crea automáticamente en tu Google Drive la primera vez
+que alguien responde.
 
-- Una **Google Sheet** llamada "Datos — Encuesta Impacto" con el conteo de votos por opción.
-- Una **presentación de Google Slides** llamada **"Presentacion"**, con una sola diapositiva:
-  la pregunta, la lista de opciones, y un **gráfico de dona** conectado a la Sheet que se
-  actualiza solo con cada respuesta nueva.
+## Si quieres empezar de cero
+
+Ejecuta manualmente la función `reiniciarEncuesta()` desde el editor de Apps Script (selecciónala
+en el menú desplegable de funciones arriba y presiona "Ejecutar"). Esto borra la referencia
+guardada para que la próxima respuesta cree una presentación nueva desde cero. No borra el
+archivo viejo de Drive — eso lo borras tú manualmente si quieres.
