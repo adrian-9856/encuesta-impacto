@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>¿Qué es el impacto?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F5F5F5;
+    --bg-2:#EDEDED;
+    --ink:#1A1A1A;
+    --muted:#6B6B6B;
+    --line:rgba(0,0,0,0.12);
+    --accent:#1A1A1A;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:radial-gradient(circle at 30% 15%, var(--bg), var(--bg-2) 60%);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    overflow:hidden;
+    position:relative;
+  }
+
+  .eyebrow{
+    font-family:'Inter', sans-serif;
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:22px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:7px; height:7px;
+    border-radius:50%;
+    background:var(--ink);
+    box-shadow:0 0 0 4px rgba(0,0,0,0.08);
+  }
+
+  .card{
+    width:min(560px, 90vw);
+    padding:52px 44px;
+    background:#FFFFFF;
+    border:1px solid var(--line);
+    border-radius:18px;
+    box-shadow:0 12px 40px rgba(0,0,0,0.06);
+    position:relative;
+    z-index:2;
+    transition:opacity .35s ease, transform .35s ease;
+  }
+  .card.hide{ opacity:0; transform:scale(0.96); pointer-events:none; }
+
+  h1{
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:clamp(30px, 5vw, 42px);
+    line-height:1.2;
+    letter-spacing:-0.01em;
+    margin-bottom:30px;
+  }
+
+  .options{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .option{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:14px 16px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:#FAFAFA;
+    cursor:pointer;
+    transition:border-color .2s ease, background .2s ease;
+  }
+  .option:hover{ border-color:rgba(0,0,0,0.25); }
+  .option.selected{ border-color:var(--ink); background:#F0F0F0; }
+  .option input[type="radio"]{
+    accent-color:var(--ink);
+    width:18px;
+    height:18px;
+    flex-shrink:0;
+  }
+  .option span{
+    font-size:15px;
+    color:var(--ink);
+  }
+
+  .row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-top:22px;
+  }
+
+  .hint{
+    font-family:'Inter', sans-serif;
+    font-size:12px;
+    color:var(--muted);
+  }
+
+  button{
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:15px;
+    color:#FFFFFF;
+    background:var(--accent);
+    border:none;
+    padding:13px 26px;
+    border-radius:999px;
+    cursor:pointer;
+    transition:transform .15s ease, background .2s ease;
+  }
+  button:hover{ background:#333333; }
+  button:active{ transform:scale(0.97); }
+  button:disabled{ opacity:0.55; cursor:default; }
+  button:focus-visible{ outline:2px solid var(--ink); outline-offset:3px; }
+
+  /* --- Ripple + thank-you overlay --- */
+  .ripple-wrap{
+    position:fixed;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    pointer-events:none;
+    z-index:5;
+  }
+  .ripple{
+    position:absolute;
+    border-radius:50%;
+    border:1.5px solid var(--ink);
+    opacity:0;
+  }
+  .ripple.go{
+    animation:expand 2.6s cubic-bezier(.2,.6,.2,1) forwards;
+  }
+  .ripple.r1{ animation-delay:0s; border-color:#1A1A1A; }
+  .ripple.r2{ animation-delay:.28s; border-color:#6B6B6B; }
+  .ripple.r3{ animation-delay:.56s; border-color:#9E9E9E; }
+
+  @keyframes expand{
+    0%{ width:0; height:0; opacity:0.9; }
+    70%{ opacity:0.35; }
+    100%{ width:1400px; height:1400px; opacity:0; }
+  }
+
+  .thanks{
+    position:absolute;
+    text-align:center;
+    opacity:0;
+    transform:translateY(10px);
+    transition:opacity .5s ease .5s, transform .5s ease .5s;
+  }
+  .thanks.show{ opacity:1; transform:translateY(0); }
+  .thanks .big{
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:clamp(32px,6vw,48px);
+    color:var(--ink);
+  }
+  .thanks .small{
+    margin-top:10px;
+    font-family:'Inter', sans-serif;
+    font-size:12px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--muted);
+  }
+
+  /* --- Video overlay --- */
+  .video-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(26,26,26,0.94);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:20px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .4s ease;
+    z-index:10;
+  }
+  .video-overlay.show{
+    opacity:1;
+    pointer-events:auto;
+  }
+  .video-frame{
+    width:min(880px, 86vw);
+    aspect-ratio:16/9;
+    border-radius:14px;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,0.16);
+    box-shadow:0 30px 80px rgba(0,0,0,0.5);
+  }
+  .video-frame iframe{
+    width:100%;
+    height:100%;
+    border:0;
+    display:block;
+  }
+  .video-caption{
+    font-family:'Inter', sans-serif;
+    font-size:12px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:rgba(255,255,255,0.6);
+  }
+  .close-video{
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:14px;
+    color:#FFFFFF;
+    background:transparent;
+    border:1px solid rgba(255,255,255,0.3);
+    padding:10px 22px;
+    border-radius:999px;
+    cursor:pointer;
+    transition:border-color .2s ease, color .2s ease;
+  }
+  .close-video:hover{ border-color:#FFFFFF; }
+
+  @media (prefers-reduced-motion: reduce){
+    .ripple.go{ animation:none; opacity:0.25; }
+    .card, .thanks{ transition:none; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="card" id="card">
+    <div class="eyebrow">Encuesta &middot; Impacto</div>
+    <h1>¿Qué es <em>para ti</em> el impacto?</h1>
+    <form id="form">
+      <div class="options" id="options">
+        <label class="option">
+          <input type="radio" name="respuesta" value="Ayudar a otras personas">
+          <span>Ayudar a otras personas</span>
+        </label>
+        <label class="option">
+          <input type="radio" name="respuesta" value="Generar un cambio duradero">
+          <span>Generar un cambio duradero</span>
+        </label>
+        <label class="option">
+          <input type="radio" name="respuesta" value="Dejar un legado">
+          <span>Dejar un legado</span>
+        </label>
+        <label class="option">
+          <input type="radio" name="respuesta" value="Crecer y aprender">
+          <span>Crecer y aprender</span>
+        </label>
+      </div>
+      <div class="row">
+        <span class="hint">Elige una opción</span>
+        <button type="submit" id="submitBtn" disabled>Enviar respuesta →</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="ripple-wrap" id="rippleWrap" aria-hidden="true">
+    <div class="ripple r1"></div>
+    <div class="ripple r2"></div>
+    <div class="ripple r3"></div>
+    <div class="thanks" id="thanks">
+      <div class="big">Gracias por tu respuesta</div>
+      <div class="small">Tu voz forma parte de esta historia</div>
+    </div>
+  </div>
+
+  <div class="video-overlay" id="videoOverlay">
+    <div class="video-frame">
+      <iframe id="videoIframe" src="" title="Gracias por tu respuesta" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    </div>
+    <div class="video-caption">Gracias por compartir tu respuesta</div>
+    <a class="video-caption" id="fallbackLink" href="#" target="_blank" rel="noopener" style="text-decoration:underline; color:rgba(255,255,255,0.85);">¿No carga el video? Míralo aquí</a>
+    <button class="close-video" id="closeVideo">Cerrar y responder de nuevo</button>
+  </div>
+
+<script>
+  // ⚠️ Reemplaza esta URL con la de tu implementación de Apps Script (paso a paso más abajo en el chat)
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyDv4tuhfrKsFmxbHiYTVejs9KFkxwU6ayn7nvJNB3jMzME_vsXnq_BCNdAwn2mbbOMVw/exec";
+
+  // Video que se reproduce al responder
+  const YOUTUBE_VIDEO_ID = "N5K0OKnwc1c";
+  const YOUTUBE_EMBED_URL = `https://www.youtube.com/embed/${YOUTUBE_VIDEO_ID}?rel=0&modestbranding=1`;
+  const YOUTUBE_WATCH_URL = `https://www.youtube.com/watch?v=${YOUTUBE_VIDEO_ID}`;
+
+  const form = document.getElementById('form');
+  const optionInputs = form.querySelectorAll('input[name="respuesta"]');
+  const card = document.getElementById('card');
+  const submitBtn = document.getElementById('submitBtn');
+  const rippleWrap = document.getElementById('rippleWrap');
+  const thanks = document.getElementById('thanks');
+  const videoOverlay = document.getElementById('videoOverlay');
+  const videoIframe = document.getElementById('videoIframe');
+  const closeVideo = document.getElementById('closeVideo');
+
+  optionInputs.forEach(input => {
+    input.addEventListener('change', () => {
+      document.querySelectorAll('.option').forEach(el => el.classList.remove('selected'));
+      input.closest('.option').classList.add('selected');
+      submitBtn.disabled = false;
+    });
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const selected = form.querySelector('input[name="respuesta"]:checked');
+    if(!selected) return;
+    const respuesta = selected.value;
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Enviando…";
+
+    // Envío best-effort: no bloqueamos la experiencia si la red tarda
+    try {
+      if (WEB_APP_URL && !WEB_APP_URL.includes("PEGA_AQUI")) {
+        const body = new URLSearchParams({ respuesta });
+        await fetch(WEB_APP_URL, { method: "POST", body });
+      } else {
+        console.warn("WEB_APP_URL no configurada todavía — la respuesta no se envió a Slides.");
+      }
+    } catch (err) {
+      console.error("Error enviando respuesta:", err);
+    }
+
+    playRipple();
+  });
+
+  function playRipple(){
+    card.classList.add('hide');
+    document.querySelectorAll('.ripple').forEach(r => {
+      r.classList.remove('go');
+      // reflow para poder re-disparar la animación
+      void r.offsetWidth;
+      r.classList.add('go');
+    });
+    setTimeout(() => thanks.classList.add('show'), 300);
+
+    // Después de las ondas, se abre el video
+    setTimeout(() => {
+      thanks.classList.remove('show');
+      document.querySelectorAll('.ripple').forEach(r => r.classList.remove('go'));
+      openVideo();
+    }, 2200);
+  }
+
+  function openVideo(){
+    videoIframe.src = YOUTUBE_EMBED_URL;
+    document.getElementById('fallbackLink').href = YOUTUBE_WATCH_URL;
+    videoOverlay.classList.add('show');
+  }
+
+  function closeVideoAndReset(){
+    videoOverlay.classList.remove('show');
+    videoIframe.src = ""; // detiene la reproducción
+    optionInputs.forEach(input => input.checked = false);
+    document.querySelectorAll('.option').forEach(el => el.classList.remove('selected'));
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Enviar respuesta →";
+    card.classList.remove('hide');
+  }
+
+  closeVideo.addEventListener('click', closeVideoAndReset);
+</script>
+</body>
+</html>
